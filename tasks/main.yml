@@ -1,0 +1,19 @@
+---
+- name: install common packages
+  apt: name={{item}} state=present
+  with_items:
+      - git-core
+
+- name: check if ssh public key has been generated
+  stat: path=/home/{{web_user}}/.ssh/id_rsa.pub
+  register: rsafile
+  when: web_application
+  
+- name: copy and unzip ssh.tar.gz
+  copy: src=ssh.sh dest=/root owner=root group=root mode=0644
+  when: rsafile.stat.exists == false and web_application == true
+  
+- name: run ssh.sh
+  shell: cd /root/; /bin/sh ssh.sh {{web_user}} {{web_group}} {{ansible_resource}}
+  when: rsafile.stat.exists == false and web_application == true
+  
